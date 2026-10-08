@@ -23,7 +23,7 @@ describe('Centralized operations contact details', () => {
       const response = BotRouter.formatCustomerHandoffResponse(route);
 
       assert.equal(route.primary_area, 'ENVIO_MERCADOLIBRE');
-      assert.match(response, /Gracias por comentarnos tu problema/);
+      assert.match(response, /Gracias por comentarnos tu situación/);
       assert.match(response, /paquetes y envíos/);
       assert.match(response, /clientes@aitue\.net/);
       assert.match(response, /Horario de atención de Operativa: lunes a viernes, de 09:00 a 18:00 hs \(Argentina\)/);
@@ -39,6 +39,17 @@ describe('Centralized operations contact details', () => {
     assert.equal(CONTACTS.soporte_tecnico.waLink, 'https://wa.me/5493872127974');
     assert.equal(BotRouter.getHandoffNotificationContacts(technicalRoute)[0], CONTACTS.soporte_tecnico);
     assert.equal(BotRouter.getHandoffNotificationContacts(connectivityRoute)[0], CONTACTS.soporte_tecnico);
+  });
+
+  it('hands off product purchases to Commercial instead of sending product advice', () => {
+    const classification = IntentClassifier.classify('Quiero comprar un Ultra');
+    const route = BotRouter.route(classification);
+
+    assert.equal(route.primary_area, 'PRODUCTO_COMERCIAL');
+    assert.equal(BotRouter.isCustomerHandoff(route), true);
+    assert.deepEqual(BotRouter.getHandoffNotificationContacts(route), [CONTACTS.comercial]);
+    assert.match(BotRouter.formatCustomerHandoffResponse(route), /Gerencia Comercial.*se pondrá en contacto/s);
+    assert.match(BotRouter.formatCustomerHandoffResponse(route), /Horario de atención del área: 24\/7/);
   });
 
   it('routes distributors to national or international WhatsApp contacts', () => {

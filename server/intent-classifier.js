@@ -2,7 +2,7 @@
 // AITUE COMUNICA S.A. - CLASIFICADOR SEMÁNTICO DE INTENCIONES CON ANÁLISIS DE PROPÓSITO
 // ----------------------------------------------------
 
-import { AREAS } from './areas.js';
+import { AREAS } from './bot-router.js';
 
 export default class IntentClassifier {
   // Limpia el mensaje y corrige variantes conocidas antes de evaluar reglas o similitud.
@@ -862,6 +862,7 @@ export default class IntentClassifier {
         return {
           primary_area: 'PRODUCTO_COMERCIAL',
           secondary_areas: ['PROTECTOR_ADVICE'],
+          commercialHandoff: hasExplicitCommercialIntent,
           confidence: 0.98,
           reason: 'El cliente solicita información sobre protectores o soluciones AITUE.'
         };
@@ -870,6 +871,7 @@ export default class IntentClassifier {
         return {
           primary_area: 'PRODUCTO_COMERCIAL',
           secondary_areas: ['ULTRA_ADVICE'],
+          commercialHandoff: hasExplicitCommercialIntent,
           confidence: 0.98,
           reason: 'El cliente selecciona la Línea Ultra+ de AITUE.'
         };
@@ -878,6 +880,7 @@ export default class IntentClassifier {
         return {
           primary_area: 'PRODUCTO_COMERCIAL',
           secondary_areas: ['PRO_ADVICE'],
+          commercialHandoff: hasExplicitCommercialIntent,
           confidence: 0.98,
           reason: 'El cliente selecciona la Línea Aitue Pro (móvil/vehicular).'
         };
@@ -886,6 +889,7 @@ export default class IntentClassifier {
         return {
           primary_area: 'PRODUCTO_COMERCIAL',
           secondary_areas: ['STANDARD_ADVICE'],
+          commercialHandoff: hasExplicitCommercialIntent,
           confidence: 0.98,
           reason: 'El cliente selecciona la Línea Aitue Standard (fija).'
         };

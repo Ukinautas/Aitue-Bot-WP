@@ -2,9 +2,224 @@
 // AITUE COMUNICA S.A. - ROUTER CENTRAL DE DERIVACIONES POR ÁREA
 // ----------------------------------------------------
 
-import { AREAS } from './areas.js';
 import { PROTOCOLS } from './protocols.js';
 import { CONTACTS, LINKS } from './contacts.js';
+
+export const AREAS = {
+  PRODUCTO_INFO: {
+    id: 'PRODUCTO_INFO',
+    name: 'Productos',
+    objective: 'El cliente quiere conocer las líneas propias Aitue Standard, Aitue Pro y Ultra+, compatibles con terminales Starlink Mini y Mini X.',
+    triggers: [
+      'qué productos tienen', 'que productos tienen', 'qué es aitue standard', 'qué es aitue pro',
+      'qué es ultra+', 'qué accesorios existen', 'para qué sirve', 'características',
+      'qué soluciones tienen', 'quiero ver productos', 'accesorios',
+      'quiero saber sobre el standard', 'quiero saber sobre el pro', 'quiero saber sobre el ultra+',
+      'quiero saber sobre el modelo standard', 'quiero saber sobre el modelo pro', 'quiero saber sobre el modelo ultra+','qué es aitue modelo standard', 'qué es aitue modelo pro', 'qué es aitue modelo ultra+','qué es aitue standard', 'qué es aitue pro', 'quiero saber del modelo Aitue Pro', 'quiero saber del modelo Aitue Standard','quiero saber del modelo Aitue Ultra+'
+    ],
+    exclusions: ['comprar', 'precio', 'cotización', 'asesoramiento', 'se rompió', 'falla', 'roto'],
+    responsible: [CONTACTS.comercial],
+    action: 'DERIVE_TO_COMMERCIAL',
+    priority: 8,
+    relatedLinks: [LINKS.shop]
+  },
+  PRODUCTO_COMERCIAL: {
+    id: 'PRODUCTO_COMERCIAL',
+    name: 'Ventas en Cantidad y Asesoramiento (Gerencia Comercial)',
+    objective: 'El cliente quiere ventas en cantidad, cotización, comprar, conocer precio, disponibilidad o propuesta comercial.',
+    triggers: [
+      'precio', 'cuánto cuesta', 'cuanto cuesta', 'cotización', 'cotizacion', 'presupuesto',
+      'quiero comprar', 'disponibilidad', 'quiero uno',
+      'asesoramiento comercial', 'propuesta comercial', 'ventas', 'ventas en cantidad',
+      'starlink v2', 'v2', 'tienen v2', 'quiero saber si tienen v2', 'saber si tienen', 'tienen el', 'tienen la', 'tienen disponible', 'venden'
+    ],
+    exclusions: ['se rompió', 'falla', 'roto', 'no funciona', 'no tengo internet', 'internacional'],
+    responsible: [CONTACTS.comercial],
+    action: 'DERIVE_TO_COMMERCIAL',
+    priority: 3,
+    relatedLinks: [LINKS.shop]
+  },
+  COMERCIAL_INTERNACIONAL: {
+    id: 'COMERCIAL_INTERNACIONAL',
+    name: 'Atención Comercial Internacional',
+    objective: 'El cliente solicita ventas en cantidad o asesoría comercial internacional.',
+    triggers: [
+      'internacional', 'ventas internacional', 'asesoria internacional', 'asesoría internacional',
+      'compra internacional', 'desde el exterior', 'fuera de argentina', 'exportacion', 'exportación',
+      'chile', 'uruguay', 'paraguay', 'brasil', 'bolivia', 'peru', 'colombia', 'mexico', 'españa',
+      'estados unidos', 'eeuu', 'usa', 'exterior', 'afuera', 'fuera del pais', 'fuera del país',
+      'dolares', 'dólares', 'usd', 'euros', 'paypal', 'wire transfer', 'transferencia internacional'
+    ],
+    exclusions: [],
+    responsible: [CONTACTS.comercial_internacional],
+    action: 'DERIVE_TO_INTERNATIONAL',
+    priority: 2.5,
+    relatedLinks: [LINKS.shop]
+  },
+  PRODUCTO_TECNICO: {
+    id: 'PRODUCTO_TECNICO',
+    name: 'Soporte Técnico y Productos',
+    objective: 'El cliente reporta un problema técnico, consulta técnica, falla de conectividad o problema con un producto/cable.',
+    triggers: [
+      'se rompió', 'se rompio', 'roto', 'se dañó', 'se daño', 'no funciona', 'dejó de funcionar',
+      'falla', 'está fallando', 'no prende', 'no alimenta', 'cable roto', 'cable de alimentación dañado',
+      'accesorio roto', 'gabinete con problema', 'fijación dañada', 'problema de instalación',
+      'configuración', 'diagnóstico', 'falla de producto', 'consulta técnica', 'problemas técnicos', 'problemas de conectividad'
+    ],
+    exclusions: ['quiero comprar un cable', 'precio de cable', 'cuanto cuesta el cable', 'comprar un soporte', 'quiero comprar un soporte', 'precio del soporte', 'quiero comprar un gabinete', 'precio del gabinete', 'asesoramiento', 'quiero comprar', 'precio', 'cotización', 'cotizacion', 'presupuesto'],
+    responsible: [CONTACTS.soporte_tecnico],
+    action: 'DERIVE_TO_TECH_SUPPORT',
+    priority: 1,
+    relatedLinks: []
+  },
+  INTERNET_COMERCIAL: {
+    id: 'INTERNET_COMERCIAL',
+    name: 'Internet Vía Satélite (Comercial)',
+    objective: 'El cliente quiere información, precio, contratación, cotización o disponibilidad del servicio de Internet vía satélite.',
+    triggers: [
+      'quiero internet', 'quiero contratar', 'contratación', 'contratacion', 'precio internet',
+      'cuánto cuesta internet', 'cotización internet', 'información del servicio', 'disponibilidad internet',
+      'planes', 'servicio vía satélite', 'contratar para mi empresa', 'contratar para vehículo'
+    ],
+    exclusions: ['activar', 'desactivar', 'sin internet', 'no tengo internet', 'problema de red', 'problema de señal'],
+    responsible: [CONTACTS.comercial],
+    action: 'DERIVE_TO_INTERNET_COMMERCIAL',
+    priority: 4,
+    relatedLinks: [LINKS.web]
+  },
+  INTERNET_SOPORTE: {
+    id: 'INTERNET_SOPORTE',
+    name: 'Internet Vía Satélite (Soporte y Conectividad)',
+    objective: 'El cliente consulta por problemas técnicos, conectividad, problemas de internet, consumo de datos, activación o desactivación.',
+    triggers: [
+      'activar', 'activación', 'activacion', 'actibar', 'aktivar', 'actibacion',
+      'desactivar', 'desactivación', 'desactivacion', 'desactibar', 'desaktivar',
+      'baja', 'basja', 'vaja', 'vasja', 'cancelar', 'cancelacion', 'pausar', 'suspender',
+      'ayuda para activar', 'ayuda activar', 'activar mi antena', 'activar antena',
+      'no tengo internet', 'no funciona internet', 'problema de conexión', 'problema de red',
+      'problema de señal', 'servicio caído', 'soporte de red', 'problema con el servicio',
+      'conexion de mi antena', 'conexion de la antena', 'conectividad de mi antena', 'conectividad de la antena',
+      'problemas con la conexion', 'problemas con la conexión', 'problema de conectividad', 'conectividad antena', 'conexion antena',
+      'conectividad', 'internet', 'conectividad a internet', 'consumo de datos', 'consumo', 'interrupcion de conectividad', 'interrupcion'
+    ],
+    exclusions: ['quiero contratar', 'cuanto cuesta internet', 'planes de internet'],
+    responsible: [CONTACTS.soporte_tecnico],
+    action: 'DERIVE_TO_INTERNET_SUPPORT',
+    priority: 2,
+    relatedLinks: []
+  },
+  DISTRIBUIDORES: {
+    id: 'DISTRIBUIDORES',
+    name: 'Atención a Distribuidores y Distribuidoras',
+    objective: 'El cliente consulta por ser distribuidor, distribuidora o programa de distribución.',
+    triggers: [
+      'distribuidor', 'distribuidores', 'distribuidora', 'distribuidoras', 'quiero ser distribuidor',
+      'venta mayorista distribuidor', 'programa de distribuidores'
+    ],
+    exclusions: [],
+    responsible: [CONTACTS.distribuidores],
+    action: 'DERIVE_TO_DISTRIBUTORS',
+    priority: 4.5,
+    relatedLinks: [LINKS.web]
+  },
+  PAGO: {
+    id: 'PAGO',
+    name: 'Pagos',
+    objective: 'El cliente solicita documentación de una compra o consulta por una operación de pago.',
+    triggers: [
+      'problema con pago', 'pago rechazado', 'pago no acreditado', 'inconveniente al pagar',
+      'error de pago', 'comprobante de pago', 'no aparece el pago', 'pagos', 'quiero el comprobante de pago', 'quiero el comprobante de la transferencia', 'quiero el comprobante de la transacción', 'quiero la factura de la compra', 'quiero el comprobante de compra', 'remito', 'remitos', 'remito de compra'
+    ],
+    exclusions: ['quiero pagar para comprar', 'cuanto cuesta'],
+    responsible: [CONTACTS.administracion],
+    action: 'DERIVE_TO_PAYMENTS',
+    priority: 6,
+    relatedLinks: []
+  },
+  ENVIO_MERCADOLIBRE: {
+    id: 'ENVIO_MERCADOLIBRE',
+    name: 'Envíos, Despachos y Mercado Libre',
+    objective: 'El cliente consulta por problemas de pedidos, despachos, entregas o compras en Mercado Libre.',
+    triggers: [
+      'envío', 'envio', 'entrega', 'seguimiento', 'despacho', 'despachos', 'pedido', 'pedidos', 'no llegó', 'no llego',
+      'dónde está mi pedido', 'donde esta mi pedido', 'mercado libre', 'mercadolibre', 'problemas de pedidos'
+    ],
+    exclusions: ['cuanto cuesta el envio'],
+    responsible: [CONTACTS.envios],
+    action: 'DERIVE_TO_SHIPPING',
+    priority: 5,
+    relatedLinks: []
+  },
+  B2B: {
+    id: 'B2B',
+    name: 'Empresas / Flotas / B2B',
+    objective: 'El cliente representa una empresa, flota o compra en volumen y busca una solución comercial corporativa.',
+    triggers: [
+      'empresa', 'flota', 'varios vehículos', 'varias camionetas', 'varias unidades',
+      'compra en volumen', 'minería', 'mineria', 'proyecto corporativo', 'implementación empresarial', 'b2b'
+    ],
+    exclusions: [],
+    responsible: [CONTACTS.comercial],
+    action: 'DERIVE_TO_B2B',
+    priority: 7,
+    relatedLinks: [LINKS.web]
+  },
+  VISITA_COMERCIAL: {
+    id: 'VISITA_COMERCIAL',
+    name: 'Visita Comercial',
+    objective: 'El cliente quiere visitar AITUE o conocer productos personalmente.',
+    triggers: [
+      'visita', 'visitar', 'conocer oficina', 'ir presencialmente', 'conocer los productos en persona',
+      'visita presencial', 'ir a ver aitue', 'pasar por ahi', 'pasar por la empresa', 'pasar por el local'
+    ],
+    exclusions: [],
+    responsible: [CONTACTS.comercial],
+    action: 'DERIVE_TO_COMMERCIAL',
+    priority: 7.5,
+    relatedLinks: [LINKS.web]
+  },
+  UBICACION_GENERAL: {
+    id: 'UBICACION_GENERAL',
+    name: 'Presencia Internacional y Ubicación',
+    objective: 'El cliente consulta sobre la ubicación, sedes, presencia o dónde se encuentra AITUE.',
+    triggers: [
+      'donde estan ubicados', 'donde estan', 'donde quedan', 'donde estan las sedes',
+      'ubicación', 'ubicacion', 'sedes', 'donde se encuentran', 'donde stan', 'direccion', 'calle'
+    ],
+    exclusions: ['visitar', 'visita', 'ir presencialmente', 'ir a la oficina', 'ir a ver'],
+    responsible: null,
+    action: 'SEND_UBICACION_INFO',
+    priority: 8.5,
+    relatedLinks: [LINKS.web]
+  },
+  EMPRESA_INFO: {
+    id: 'EMPRESA_INFO',
+    name: 'Información Institucional y Sitio Web',
+    objective: 'El cliente quiere conocer AITUE, qué hace, qué ofrece, su página web oficial o información institucional.',
+    triggers: [
+      'qué es aitue', 'que es aitue', 'quienes son', 'quiénes son', 'qué hace aitue', 'a qué se dedican', 'sobre aitue', 'acerca de aitue',
+      'página web', 'pagina web', 'sitio web', 'cuál es la página web', 'cual es la pagina web', 'cuál es la web', 'cual es la web',
+      'link de la página', 'link de la pagina', 'link web', 'direccion web', 'dirección web', 'web oficial', 'sitio oficial',
+      'página de aitue', 'pagina de aitue', 'web de aitue'
+    ],
+    exclusions: [],
+    responsible: null,
+    action: 'SEND_EMPRESA_INFO',
+    priority: 9,
+    relatedLinks: [LINKS.web, LINKS.shop]
+  },
+  OPERATIVA: {
+    id: 'OPERATIVA',
+    name: 'Operativa / Otras consultas',
+    objective: 'Fallback final cuando ninguna de las áreas anteriores puede determinarse con suficiente confianza.',
+    triggers: ['operativa', 'otras consultas'],
+    exclusions: [],
+    responsible: [CONTACTS.operativa],
+    action: 'DERIVE_TO_OPERATIVA',
+    priority: 99,
+    relatedLinks: [LINKS.web]
+  }
+};
 
 const HANDOFF_NOTIFICATION_EXCLUDED_CONTACT_IDS = new Set(['envios', 'operativa']);
 
@@ -19,7 +234,20 @@ export default class BotRouter {
     if (!routeResult || routeResult.isFallback) return false;
     if (this.isEmailOnlyHandoff(routeResult)) return false;
     if (routeResult.primary_area === 'PRODUCTO_INFO' && routeResult.action !== 'SEND_COMMERCIAL_HANDOFF') return false;
-    return routeResult.action === 'DERIVE_TO_CUSTOMER_CARE' ||
+
+    // Any commercial request must be sent to the responsible area, including
+    // product-specific purchase/advice requests such as “quiero comprar un Ultra”.
+    const commercialAreas = new Set([
+      'PRODUCTO_COMERCIAL',
+      'COMERCIAL_INTERNACIONAL',
+      'INTERNET_COMERCIAL',
+      'B2B',
+      'DISTRIBUIDORES',
+      'VISITA_COMERCIAL'
+    ]);
+    return routeResult.commercialHandoff ||
+      (commercialAreas.has(routeResult.primary_area) && routeResult.action !== 'SEND_PRODUCT_ADVICE') ||
+      routeResult.action === 'DERIVE_TO_CUSTOMER_CARE' ||
       routeResult.action === 'SEND_COMMERCIAL_HANDOFF' ||
       routeResult.action?.startsWith('DERIVE_TO_');
   }
@@ -60,7 +288,7 @@ export default class BotRouter {
     const availability = operationalAreas.has(routeResult.primary_area)
       ? '🕒 Horario de atención de Operativa: lunes a viernes, de 09:00 a 18:00 hs (Argentina).'
       : '🕒 Horario de atención del área: 24/7.';
-    return `Gracias por comentarnos tu problema. ${handoffDescription}\n\n${availability}\n¡Gracias!`;
+    return `Gracias por comentarnos tu situación. ${handoffDescription}\n\n${availability}\n¡Gracias!`;
   }
 
   static route(classification, contextState = {}) {
@@ -286,14 +514,17 @@ export default class BotRouter {
     // 5. EVALUACIÓN DE CONFIANZA DE CLASIFICACIÓN (Umbral >= 0.70)
     if (confidence >= 0.70) {
       const targetArea = AREAS[primary_area] || AREAS.OPERATIVA;
-      let finalResponseText = targetArea.baseResponse;
+      let finalResponseText = '';
 
       if (secondary_areas.includes('STARLINK_TERMINAL_INFO')) {
         finalResponseText = `Starlink Mini y Mini X son terminales de Starlink, no modelos propios de AITUE.\n\nLas líneas de integración propias de AITUE son Standard, Pro y Ultra+, compatibles con esos terminales. También ofrecemos accesorios y adaptaciones adicionales.\n\n🛒 Catálogo oficial: ${LINKS.shop}`;
       } else if (secondary_areas.includes('PRODUCT_DETAIL_CLARIFICATION')) {
         finalResponseText = '¿Preferís que te derive al Sector Comercial o querés más información sobre el modelo? Respondé “Sector Comercial” o “Más información”.';
       } else if (secondary_areas.includes('COMMERCIAL_HANDOFF')) {
-        finalResponseText = targetArea.baseResponse;
+        finalResponseText = this.formatCustomerHandoffResponse({
+          primary_area: targetArea.id,
+          area: targetArea.name
+        });
       } else if (secondary_areas.includes('PRODUCT_CATALOG')) {
         const modelName = classification.modelName || 'AITUE';
         const productLinks = {
@@ -421,6 +652,17 @@ Si querés asesoramiento comercial, respondé "sí" y te derivamos a Gerencia Co
         finalResponseText = `📦 Operativa de Envíos y Despachos\n📧 ${CONTACTS.envios.email} (Lunes a viernes, de 09:00 a 18:00 hs AR)\n\n🛠️ Atención al Cliente\n📧 ${CONTACTS.soporte_tecnico.email}`;
       }
 
+      if (!finalResponseText && targetArea.action?.startsWith('DERIVE_TO_')) {
+        finalResponseText = this.formatCustomerHandoffResponse({
+          primary_area: targetArea.id,
+          area: targetArea.name
+        });
+      } else if (!finalResponseText && targetArea.id === 'UBICACION_GENERAL') {
+        finalResponseText = PROTOCOLS.UBICACION_GENERAL;
+      } else if (!finalResponseText && targetArea.id === 'EMPRESA_INFO') {
+        finalResponseText = PROTOCOLS.EMPRESA_INFO;
+      }
+
       return {
         intent: primary_area,
         primary_area: targetArea.id,
@@ -428,6 +670,7 @@ Si querés asesoramiento comercial, respondé "sí" y te derivamos a Gerencia Co
         confidence: confidence,
         reason: reason,
         selectedClarificationOption: classification.selectedClarificationOption || null,
+        commercialHandoff: classification.commercialHandoff === true,
         area: targetArea.name,
         areaId: targetArea.id,
         responsible: targetArea.responsible || [],

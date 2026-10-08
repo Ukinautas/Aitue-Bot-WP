@@ -8,11 +8,10 @@ import pino from 'pino';
 
 // Architecture Modules
 import IntentClassifier from './intent-classifier.js';
-import BotRouter from './bot-router.js';
+import BotRouter, { AREAS } from './bot-router.js';
 import ContextManager from './context-manager.js';
 import ResponseGenerator from './response-generator.js';
 import { CONTACTS, LINKS } from './contacts.js';
-import { AREAS } from './areas.js';
 import { PROTOCOLS, SYSTEM_PROMPT } from './protocols.js';
 import {
   ALWAYS_ACTIVE_PHONE_NUMBERS,
