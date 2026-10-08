@@ -2,8 +2,6 @@
 // AITUE COMUNICA S.A. - CLASIFICADOR SEMÁNTICO DE INTENCIONES CON ANÁLISIS DE PROPÓSITO
 // ----------------------------------------------------
 
-import { AREAS } from './bot-router.js';
-
 export default class IntentClassifier {
   // Limpia el mensaje y corrige variantes conocidas antes de evaluar reglas o similitud.
   // Los reemplazos por palabra completa evitan alterar accidentalmente términos más largos.
@@ -103,65 +101,6 @@ export default class IntentClassifier {
   }
 
   // Puntúa cada área por coincidencia literal o cobertura aproximada de un trigger.
-  static scoreAreaTriggerMatch(text, area) {
-    const normalizedText = this.normalizeText(text);
-    const normalizedWords = new Set(normalizedText.split(/\s+/).filter(Boolean));
-    const triggers = (area.triggers || [])
-      .map(trigger => this.normalizeText(trigger))
-      .filter(Boolean);
-
-    if (!triggers.length) return 0;
-
-    let bestScore = 0;
-
-    for (const trigger of triggers) {
-      if (!trigger) continue;
-
-      if (normalizedText.includes(trigger)) {
-        bestScore = Math.max(bestScore, 4);
-        continue;
-      }
-
-      const triggerWords = trigger.split(/\s+/).filter(word => word.length >= 4);
-      if (triggerWords.length < 2) continue;
-
-      const matches = triggerWords.filter(triggerWord =>
-        [...normalizedWords].some(word => this.fuzzyWordMatch(word, triggerWord))
-      ).length;
-      const coverage = matches / triggerWords.length;
-
-      if (coverage > 0.7) {
-        bestScore = Math.max(bestScore, coverage * 3);
-      }
-    }
-
-    return bestScore;
-  }
-
-  // Devuelve el trigger ganador solo si supera el mínimo para evitar rutas por parecido débil.
-  static findBestAreaMatch(text) {
-    let bestArea = null;
-    let bestScore = 0;
-
-    for (const area of Object.values(AREAS)) {
-      const score = this.scoreAreaTriggerMatch(text, area);
-      if (score > bestScore) {
-        bestScore = score;
-        bestArea = area;
-      }
-    }
-
-    if (bestScore >= 1.5 && bestArea) {
-      return {
-        area: bestArea,
-        score: bestScore,
-        id: bestArea.id
-      };
-    }
-
-    return null;
-  }
-
   static checkIncoherentOrGibberish(raw, text) {
     if (!raw || raw.length < 2) return false;
     const words = text.split(' ').filter(w => w.length > 0);
@@ -1040,17 +979,6 @@ export default class IntentClassifier {
         secondary_areas: [],
         confidence: 0.93,
         reason: 'El cliente consulta sobre la empresa AITUE, su trayectoria e información institucional.'
-      };
-    }
-
-    // El fallback aproximado va al final para no desplazar reglas específicas ni contexto conversacional.
-    const fuzzyMatch = this.findBestAreaMatch(text);
-    if (fuzzyMatch) {
-      return {
-        primary_area: fuzzyMatch.id,
-        secondary_areas: [],
-        confidence: Math.min(0.96, 0.7 + fuzzyMatch.score / 10),
-        reason: `Se detectó una intención cercana a un trigger semántico de ${fuzzyMatch.area.name} mediante coincidencia tolerante a errores de tipeo.`
       };
     }
 

@@ -4,15 +4,13 @@
 
 import ContextManager from './context-manager.js';
 import { PROTOCOLS } from './protocols.js';
-import { LINKS } from './contacts.js';
 
 export default class ResponseGenerator {
   static formatResponse(chatId, classification, routeResult, userInput, llmOutput = null) {
     const state = ContextManager.getState(chatId);
     const textLower = (userInput || '').toLowerCase().trim();
     const isGreeting = textLower.includes('hola') || textLower.includes('buenas') || textLower.includes('buen dia');
-    const isProductInfoRequest = classification.primary_area === 'PRODUCTO_INFO' &&
-      !['SEND_PRODUCT_CATALOG', 'SEND_STARLINK_TERMINAL_INFO', 'SEND_PRODUCT_DETAIL_CLARIFICATION'].includes(routeResult.action);
+
 
     // Registrar en ContextManager los resultados semánticos devueltos por el clasificador
     ContextManager.setClassificationResult(chatId, classification);
@@ -57,69 +55,6 @@ export default class ResponseGenerator {
 
     // 5. Utilizar la Respuesta Base Oficial Decidida por el Router
     let finalResponse = routeResult.response;
-
-    if (isProductInfoRequest) {
-      const lower = (userInput || '').toLowerCase();
-      let modelName = 'AITUE [MODELO]';
-      let modelKey = 'GENERIC';
-
-      if (/\bstandard\b/.test(lower) || lower.includes('aitue standard')) {
-        modelName = 'AITUE Standard';
-        modelKey = 'STANDARD';
-      } else if (/(?:^|\s|\()pro\b/.test(lower) && !lower.includes('productos') && !lower.includes('producto') || lower.includes('aitue pro')) {
-        modelName = 'AITUE Pro';
-        modelKey = 'PRO';
-      } else if (/\bultra\+?\b/.test(lower) || lower.includes('aitue ultra')) {
-        modelName = 'AITUE Ultra+';
-        modelKey = 'ULTRA';
-      } else if (lower.includes('modelo')) {
-        modelKey = 'GENERIC';
-      }
-
-      const productTemplates = {
-        STANDARD: {
-          intro: 'es 100% compatible con equipos Starlink Mini y Mini X.',
-          summary: 'ofrece protección para instalaciones fijas en inmuebles y estructuras permanentes.',
-          features: [
-            'Sistema diseñado a medida.',
-            'Protección rígida.',
-            'Prolija, eficiente y funcional.'
-          ],
-          ideal: 'Pensado para instalaciones fijas, residenciales o de estructura permanente.',
-          includes: '4 Fijaciones de acero inoxidable, Gabinetes ABS, y Conector hermético.'
-        },
-        PRO: {
-          intro: 'es 100% compatible con equipos Starlink Mini y Mini X.',
-          summary: 'ofrece conectividad constante y eficiente para instalaciones semifijas o móviles.',
-          features: [
-            'Desmontable.',
-            'Protección rígida.',
-            'Fijación Magnética.'
-          ],
-          ideal: 'Para uso vehicular, flotas y operaciones en movimiento(como minería, petróleo, agroindustria, transporte,etc)',
-          includes: '4 imanes de neodimio y Gabinetes ABS'
-        },
-        ULTRA: {
-          intro: 'es 100% compatible con equipos Starlink Mini y Mini X e integra fuentes de alimentación, router y componentes avanzados.',
-          summary: 'ofrece conectividad de precisión con un rendimiento extraordinario.',
-          features: [
-            'Conectividad WiFi + LTE.',
-            'Imágenes en vivo, gestor de videos',
-            'Gestión de Trackeo en tiempo real'
-          ],
-          ideal: 'Para uso profesional, industrial y de integración avanzada.',
-          includes: 'Conector IP67, Gabinetes ABS, Router LTE y Fuente de alimentación, cámara 720p.'
-        },
-      };
-
-      const selected = productTemplates[modelKey];
-      if (selected) {
-        finalResponse = `El modelo "${modelName}" ${selected.intro}\n\n${modelName} ${selected.summary}\n\nCaracterísticas principales:\n- ${selected.features[0]}\n- ${selected.features[1]}\n- ${selected.features[2]}\n\nIdeal para: ${selected.ideal}\n\nIncluye: ${selected.includes}\n\n¿Querés que te derive al Sector Comercial o preferís más información sobre este modelo?`;
-        ContextManager.updateState(chatId, { pendingProductDetailChoice: true });
-      } else {
-        finalResponse = `Las líneas propias de AITUE son Standard, Pro y Ultra+. Starlink Mini y Mini X son terminales compatibles, no modelos AITUE.\n\n🛒 Consultá el catálogo oficial: ${LINKS.shop}\n\nSi querés asesoramiento, respondé "sí" y te derivamos a Gerencia Comercial.`;
-      }
-    }
 
     // Si el usuario incluyó saludo ("Hola, quiero contratar Internet"), agregar saludo breve
     if (isGreeting && !state.hasGreeted) {

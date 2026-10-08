@@ -4,14 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import ContextManager from '../context-manager.js';
-import { AREAS } from '../bot-router.js';
-
 test('real web API preserves official answers, grounds RAG replies and isolates durable customer memory', async t => {
   t.mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-10-06T13:00:00Z') });
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'aitue-grounded-api-'));
   Object.assign(process.env, { BOT_TEST_MODE: 'true', BOT_DATA_DIR: directory, ADMIN_PASSWORD: 'test-only-password', SESSION_SECRET: 'test-session-secret', OPENAI_API_KEY: '', WHISPER_API_KEY: '', GROQ_API_KEY: '' });
-  assert.equal(Object.values(AREAS).some(area => Object.hasOwn(area, 'baseResponse')), false);
-  fs.writeFileSync(path.join(directory, 'runtime-config.json'), JSON.stringify({ model: 'gpt-5.6-luna', areas: { PRODUCTO_INFO: { baseResponse: 'Do not add legacy responses' } } }));
+  fs.writeFileSync(path.join(directory, 'runtime-config.json'), JSON.stringify({ model: 'gpt-5.6-luna' }));
   const { app, shutdown, testHooks } = await import('../wp-server.js');
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));

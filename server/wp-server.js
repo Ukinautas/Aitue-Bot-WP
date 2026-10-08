@@ -8,7 +8,7 @@ import pino from 'pino';
 
 // Architecture Modules
 import IntentClassifier from './intent-classifier.js';
-import BotRouter, { AREAS } from './bot-router.js';
+import BotRouter from './bot-router.js';
 import ContextManager from './context-manager.js';
 import ResponseGenerator from './response-generator.js';
 import { CONTACTS, LINKS } from './contacts.js';
@@ -107,7 +107,7 @@ if (!OPENAI_API_KEY) {
 let customWpSystemPrompt = runtimeSettings.wpSystemPrompt || SYSTEM_PROMPT;
 let assistantSystemPrompt = runtimeSettings.assistantSystemPrompt || SYSTEM_PROMPT;
 isBotPaused = runtimeSettings.paused ?? false;
-for (const [collection, values] of [[CONTACTS, runtimeSettings.contacts], [AREAS, runtimeSettings.areas], [PROTOCOLS, runtimeSettings.protocols], [LINKS, runtimeSettings.links]]) {
+for (const [collection, values] of [[CONTACTS, runtimeSettings.contacts], [PROTOCOLS, runtimeSettings.protocols], [LINKS, runtimeSettings.links]]) {
   for (const [id, value] of Object.entries(values || {})) if (Object.hasOwn(collection, id)) {
     if (typeof collection[id] === 'object' && collection[id] && value && typeof value === 'object') {
       for (const [key, stored] of Object.entries(value)) {
@@ -122,7 +122,7 @@ function persistSettings() {
   Object.assign(runtimeSettings, {
     apiKey: OPENAI_API_KEY, whisperApiKey: customWhisperApiKey, model: currentModelName,
     temperature: currentTemperature, maxTokens: currentMaxTokens, wpSystemPrompt: customWpSystemPrompt,
-    assistantSystemPrompt, paused: isBotPaused, contacts: CONTACTS, areas: AREAS, protocols: PROTOCOLS, links: LINKS
+    assistantSystemPrompt, paused: isBotPaused, contacts: CONTACTS, protocols: PROTOCOLS, links: LINKS
   });
   writeJsonFile(SETTINGS_FILE, JSON.parse(JSON.stringify(runtimeSettings)));
 }
@@ -1718,22 +1718,7 @@ app.post('/api/admin/restart-bot', async (req, res) => {
   }
 });
 
-// 1. ADMIN: ÁREAS
-app.get('/api/admin/areas', (req, res) => {
-  res.json({ success: true, areas: AREAS });
-});
-
-app.post('/api/admin/areas', (req, res) => {
-  const { areaId, updates } = req.body || {};
-  if (areaId && AREAS[areaId] && updates) {
-    Object.assign(AREAS[areaId], updates);
-    persistSettings();
-    return res.json({ success: true, area: AREAS[areaId] });
-  }
-  res.status(400).json({ error: 'Área no encontrada o datos inválidos' });
-});
-
-// 2. ADMIN: CONTACTOS
+// ADMIN: CONTACTOS
 app.get('/api/admin/contacts', (req, res) => {
   res.json({ success: true, contacts: CONTACTS });
 });
