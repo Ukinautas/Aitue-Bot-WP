@@ -32,7 +32,7 @@ export default class BotRouter {
     const isProtectorAdvice = (routeResult.secondary_areas || []).some(areaId =>
       areaId === 'PROTECTOR_ADVICE' || areaId === 'PROTECTOR_EXPLANATION'
     );
-    return (routeResult.commercialHandoff && !isProtectorAdvice && routeResult.action !== 'SEND_PRODUCT_ADVICE') ||
+    return (routeResult.commercialHandoff && !isProtectorAdvice) ||
       (commercialAreas.has(routeResult.primary_area) && routeResult.action !== 'SEND_PRODUCT_ADVICE') ||
       routeResult.action === 'DERIVE_TO_CUSTOMER_CARE' ||
       routeResult.action === 'SEND_COMMERCIAL_HANDOFF' ||
@@ -336,9 +336,13 @@ export default class BotRouter {
     // 5. EVALUACIÓN DE CONFIANZA DE CLASIFICACIÓN (Umbral >= 0.70)
     if (confidence >= 0.70) {
       const suppressProductAdvice = false;
-      let finalResponseText = '';
+      const forceCommercialHandoff = primary_area === 'PRODUCTO_COMERCIAL' ||
+        classification.commercialHandoff === true;
+      let finalResponseText = forceCommercialHandoff
+        ? this.formatCustomerHandoffResponse({ primary_area, area: primary_area })
+        : '';
 
-      if (!suppressProductAdvice) {
+      if (!suppressProductAdvice && !forceCommercialHandoff) {
       if (secondary_areas.includes('STARLINK_TERMINAL_INFO') && !suppressProductAdvice) {
         finalResponseText = `Starlink Mini y Mini X son terminales de Starlink, no modelos propios de AITUE.\n\nLas líneas de integración propias de AITUE son Standard, Pro y Ultra+, compatibles con esos terminales. También ofrecemos accesorios y adaptaciones adicionales.\n\n🛒 Catálogo oficial: ${LINKS.shop}`;
       } else if (secondary_areas.includes('PRODUCT_DETAIL_CLARIFICATION')) {
@@ -503,11 +507,7 @@ Si querés asesoramiento comercial, respondé "sí" y te derivamos a Gerencia Co
         area: primary_area,
         areaId: primary_area,
         responsible: this.getAreaResponsible(primary_area),
-        action: suppressProductAdvice
-          ? 'SEND_COMMERCIAL_HANDOFF'
-          : classification.commercialHandoff === true && !secondary_areas.some(areaId =>
-            areaId === 'PROTECTOR_ADVICE' || areaId === 'PROTECTOR_EXPLANATION'
-          )
+        action: suppressProductAdvice || forceCommercialHandoff
           ? 'SEND_COMMERCIAL_HANDOFF'
           : primary_area === 'PRODUCTO_INFO' && secondary_areas.length === 0
           ? 'SEND_PRODUCT_ADVICE'

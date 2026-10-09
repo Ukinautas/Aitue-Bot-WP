@@ -200,6 +200,19 @@ describe('Centralized operations contact details', () => {
     ContextManager.resetState(chatId);
   });
 
+  it('preserves the original consultation when the customer confirms a handoff', () => {
+    const chatId = `test-summary-confirmation-${Date.now()}@s.whatsapp.net`;
+    ContextManager.addMessage(chatId, 'user', 'Quiero comprar 15 cables para el auto');
+    ContextManager.addMessage(chatId, 'assistant', 'Gerencia Comercial revisará tu consulta.');
+    ContextManager.addMessage(chatId, 'user', 'Sí');
+    const summary = ContextManager.generateSummaryForOperator(chatId, {}, '+5491122334455');
+
+    assert.match(summary, /Consulta: Quiero comprar 15 cables para el auto/);
+    assert.match(summary, /Confirmación del cliente: Sí/);
+    assert.doesNotMatch(summary, /^Consulta: Sí$/m);
+    ContextManager.resetState(chatId);
+  });
+
   it('does not expose a WhatsApp username or LID as the customer name or phone', () => {
     const chatId = `204977482018928@lid`;
     ContextManager.addMessage(chatId, 'user', 'Necesito que revisen mi consulta');

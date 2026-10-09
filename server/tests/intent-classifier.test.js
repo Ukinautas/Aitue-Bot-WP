@@ -101,7 +101,7 @@ describe('IntentClassifier typo and malformed-query corpus', () => {
   it('routes product purchases for internet use to product sales, not satellite internet sales', () => {
     const classification = IntentClassifier.classify('Quiero comprar un cable para Internet');
     assert.equal(classification.primary_area, 'PRODUCTO_COMERCIAL');
-    assert.equal(BotRouter.route(classification).action, 'DERIVE_TO_COMMERCIAL');
+    assert.equal(BotRouter.route(classification).action, 'SEND_COMMERCIAL_HANDOFF');
   });
 
   it('prioritizes internet-service problems over a simultaneous plan inquiry', () => {
@@ -213,46 +213,18 @@ describe('IntentClassifier typo and malformed-query corpus', () => {
     ContextManager.resetState(chatId);
   });
 
-  it('shows product advice before offering and handling a commercial handoff', () => {
-    const chatId = `test-product-advice-handoff-${Date.now()}`;
+  it('derives commercial product requests without legacy product-advice responses', () => {
+    const chatId = `test-commercial-handoff-${Date.now()}`;
     const state = ContextManager.getState(chatId);
     const initialMessage = 'Quiero ver redes de protección para antena';
     const initialClassification = IntentClassifier.classify(initialMessage, state);
     const initialRoute = BotRouter.route(initialClassification, state);
-    const initialResponse = ResponseGenerator.formatResponse(
-      chatId,
-      initialClassification,
-      initialRoute,
-      initialMessage
-    );
+    const initialResponse = BotRouter.formatCustomerHandoffResponse(initialRoute);
 
-    assert.equal(initialRoute.action, 'SEND_PRODUCT_ADVICE');
-    assert.equal(BotRouter.isCustomerHandoff(initialRoute), false);
-    assert.match(initialResponse, /¿Cuál de estas 3 soluciones/);
-    assert.match(initialResponse, /respondé "sí" y te derivamos a Gerencia Comercial/i);
-    assert.equal(state.pendingCommercialAdviceConfirmation, true);
-
-    const productChoice = IntentClassifier.classify('2', state);
-    const productRoute = BotRouter.route(productChoice, state);
-    const productResponse = ResponseGenerator.formatResponse(
-      chatId,
-      productChoice,
-      productRoute,
-      '2'
-    );
-
-    assert.equal(productChoice.primary_area, 'PRODUCTO_COMERCIAL');
-    assert.ok(productChoice.secondary_areas.includes('PRO_ADVICE'));
-    assert.equal(productRoute.action, 'SEND_PRODUCT_ADVICE');
-    assert.equal(BotRouter.isCustomerHandoff(productRoute), false);
-    assert.match(productResponse, /Aitue Pro/);
-    assert.doesNotMatch(productResponse, /Operativa/);
-    assert.equal(state.pendingCommercialAdviceConfirmation, true);
-
-    const confirmation = IntentClassifier.classify('Sí', state);
-    const handoff = BotRouter.route(confirmation, state);
-    assert.ok(confirmation.secondary_areas.includes('COMMERCIAL_HANDOFF'));
-    assert.equal(BotRouter.isCustomerHandoff(handoff), true);
+    assert.equal(initialRoute.action, 'SEND_COMMERCIAL_HANDOFF');
+    assert.equal(BotRouter.isCustomerHandoff(initialRoute), true);
+    assert.match(initialResponse, /Gerencia Comercial/);
+    assert.doesNotMatch(initialResponse, /Aitue Standard|soluciones 360/);
 
     ContextManager.resetState(chatId);
   });
@@ -277,6 +249,35 @@ describe('IntentClassifier typo and malformed-query corpus', () => {
 
     assert.equal(result.primary_area, 'PRODUCTO_COMERCIAL');
     assert.ok(!result.secondary_areas.includes('ACCESSORIES_ADVICE'));
+  });
+
+  it('distinguishes cable purchases from cable failures and quantity purchases', () => {
+    for (const input of [
+      'Tienen el cable para alimentar la antena',
+      'Quería el cable de 12V',
+      'Quiero 6 cables DBT',
+      'hola, te queria a pedir el de 30v y un cable usb-c por separado, me decis cuanto te transfiero? el envio es a palermo, me interesaria que sea en el acto',
+      'Estoy buscando el cable para starlink original con adaptador para el auto, quería comprar 15 de esos'
+    ]) {
+      const result = IntentClassifier.classify(input);
+      assert.equal(result.primary_area, 'PRODUCTO_COMERCIAL', input);
+      assert.equal(result.commercialHandoff, true, input);
+    }
+
+    const afterClarification = IntentClassifier.classify(
+      'Tienen el cable para alimentar la antena',
+      { clarificationAsked: true }
+    );
+    assert.equal(afterClarification.primary_area, 'PRODUCTO_COMERCIAL');
+    assert.equal(afterClarification.commercialHandoff, true);
+
+    for (const input of [
+      'Se me rompió el cable de alimentación',
+      'El cable no anda'
+    ]) {
+      const result = IntentClassifier.classify(input);
+      assert.equal(result.primary_area, 'PRODUCTO_TECNICO', input);
+    }
   });
 
   it('keeps vague help requests in the low-confidence clarification fallback', () => {
@@ -304,10 +305,10 @@ describe('IntentClassifier typo and malformed-query corpus', () => {
     );
   });
 
-  it('keeps comparison requests in the commercial explanation route', () => {
+  it('keeps comparison requests in the product information route', () => {
     const result = IntentClassifier.classify('compara las soluciones y antenas');
-    assert.equal(result.primary_area, 'PRODUCTO_COMERCIAL');
-    assert.ok(result.secondary_areas.includes('PROTECTOR_EXPLANATION'));
+    assert.equal(result.primary_area, 'PRODUCTO_INFO');
+    assert.deepEqual(result.secondary_areas, []);
   });
 
   it('keeps operator replies distinct from bot replies in conversation summaries', () => {

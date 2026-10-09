@@ -40,7 +40,7 @@ export default class IntentClassifier {
       ['yega', 'llega'], ['yegar', 'llegar'], ['llege', 'llegue'], ['llego', 'llego'], ['llegao', 'llego'],
       ['rechasado', 'rechazado'], ['rechazdo', 'rechazado'], ['aseptan', 'aceptan'], ['aseptar', 'aceptar'],
       ['problma', 'problema'], ['problmas', 'problemas'], ['problemaa', 'problema'],
-      ['rto', 'roto'], ['funsiona', 'funciona'], ['funsion', 'funciona'], ['funsionaba', 'funcionaba'],
+      ['rto', 'roto'], ['kable', 'cable'], ['kables', 'cables'], ['funsiona', 'funciona'], ['funsion', 'funciona'], ['funsionaba', 'funcionaba'],
       ['saver', 'saber'], ['aser', 'hacer'], ['aser', 'hacer'],
       ['distribiudora', 'distribuidor'], ['mayurista', 'distribuidor'], ['distri', 'distribuidor'],
       ['stan', 'estan'], ['estn', 'estan'], ['stn', 'estan'], ['estann', 'estan'], ['tngo', 'tengo'], ['tnog', 'tengo'], ['necesito', 'necesito'], ['nesecito', 'necesito'],
@@ -255,7 +255,9 @@ export default class IntentClassifier {
       text.includes('como envian') || text.includes('modalidad de envio') ||
       /\bcuanto cuesta (?:el )?envio\b/.test(text) || /\bcuanto sale (?:el )?envio\b/.test(text) ||
       /\bprecio (?:de|del) envio\b/.test(text) || /\bcosto (?:de|del) envio\b/.test(text);
-    if (isFaqEnvios && !text.includes('donde esta mi pedido') && !text.includes('no llego')) {
+    const isCablePurchaseWithShipping = /\b(?:cable|cables)\b/.test(text) &&
+      /\b(?:queria|quiero|pedir|pido|comprar|tienen|busco|buscando|transferencia|transfiero)\b/.test(text);
+    if (isFaqEnvios && !isCablePurchaseWithShipping && !text.includes('donde esta mi pedido') && !text.includes('no llego')) {
       return {
         primary_area: 'FAQ_ENVIOS',
         secondary_areas: [],
@@ -284,19 +286,33 @@ export default class IntentClassifier {
       };
     }
 
-    // 0.0c. Detección de Comparativas ("compara", "comparar", "diferencias") -> Derivación a Susana (Gerencia Comercial)
+    const isSolutionInformationQuery = text.includes('que soluciones tienen') ||
+      text.includes('soluciones para starlink') || text.includes('soluciones para la antena');
+    if (isSolutionInformationQuery) {
+      return {
+        primary_area: 'PRODUCTO_INFO',
+        secondary_areas: [],
+        confidence: 0.96,
+        reason: 'El cliente solicita información general sobre las soluciones AITUE.'
+      };
+    }
+
+    // 0.0c. Detección de Comparativas ("compara", "comparar", "diferencias")
     const isComparisonQuery = text.includes('compara') || text.includes('comparar') || text.includes('comparativa') || text.includes('diferencias') || text.includes('diferencia') || text.includes('diferencia entre');
     if (isComparisonQuery) {
       return {
-        primary_area: 'PRODUCTO_COMERCIAL',
-        secondary_areas: ['PROTECTOR_EXPLANATION'],
+        primary_area: 'PRODUCTO_INFO',
+        secondary_areas: [],
         confidence: 0.98,
-        reason: 'El cliente solicita una comparativa de antenas/soluciones Starlink. Se deriva a Susana en Gerencia Comercial.'
+        reason: 'El cliente solicita información comparativa sobre las soluciones y líneas de productos AITUE.'
       };
     }
 
     // 0.0d. Manejo de Opciones Aclaratorias cuando la pregunta anterior fue una derivación aclaratoria
-    if (contextState.clarificationAsked) {
+    const isCommercialCablePurchaseInClarification = (text.includes('cable') || text.includes('cables')) &&
+      (/(?:\b(?:tienen|queria|quiero|busco|buscando|comprar|compro|pedir|pido|venden|transferir|transfiero)\b)/.test(text) ||
+        /\b(?:[2-9]|\d{2,})\b/.test(text));
+    if (contextState.clarificationAsked && !isCommercialCablePurchaseInClarification) {
       if (text === '1' || text.includes('falla') || text.includes('cable') || text.includes('equipo')) {
         return {
           primary_area: 'PRODUCTO_TECNICO',
@@ -591,8 +607,9 @@ export default class IntentClassifier {
     }
 
     // 2. ENVIO_MERCADOLIBRE (RECEPCIÓN DE PEDIDOS Y ENVIOS RECIBIDOS O CON PROBLEMAS)
-    const isShippingIssue = text.includes('me llego') || text.includes('llego mal') || text.includes('me llego mal') ||
-      text.includes('me llego roto') || text.includes('llego roto') || text.includes('me vino roto') || text.includes('vino roto') ||
+    const isShippingIssue = text.includes('me llego') || text.includes('no llega') || text.includes('no me llega') || text.includes('llego mal') || text.includes('me llego mal') ||
+      text.includes('me llego roto') || text.includes('llego roto') || text.includes('llego falla') ||
+      (text.includes('reclamar') && text.includes('cable')) || text.includes('me vino roto') || text.includes('vino roto') ||
       text.includes('me vino mal') || text.includes('vino mal') || text.includes('me llego incompleto') ||
       text.includes('no llego mi pedido') || text.includes('no llego') || text.includes('no me llego') ||
       text.includes('donde esta mi pedido') || text.includes('seguimiento') || text.includes('despacho') ||
@@ -603,12 +620,30 @@ export default class IntentClassifier {
       text.includes('problema con el paquete') || text.includes('problema con mi paquete');
 
     const hasExistingShipmentStatus = text.includes('no llego') || text.includes('no me llego') ||
-      text.includes('seguimiento') || text.includes('donde esta mi pedido') ||
+      text.includes('no llega') || text.includes('no me llega') || text.includes('seguimiento') || text.includes('donde esta mi pedido') ||
       text.includes('me llego') || text.includes('recibi') || text.includes('problema con el envio') ||
       text.includes('problema con el pedido') || text.includes('problema con el paquete') ||
       text.includes('mercado libre') || text.includes('mercadolibre');
+    const hasAccessoryReferenceForPurchase = /\b(?:cable|cables|conector|conectores|fuente|fuentes|transformador|transformadores|soporte|soportes|repuesto|repuestos|adaptador|adaptadores|accesorio|accesorios|usb|usb-c|30v|12v|220v|dbt|starlink|antena|equipo|producto)\b/.test(text);
+    const hasAccessoryPurchaseLanguage = /\b(?:comprar|compro|compra|cotizar|cotizacion|precio|presupuesto|pedir|pido|queria|quiero|busco|buscando|tienen|venden|disponible|transferencia|transferir|transfiero)\b/.test(text);
+    const hasAccessoryQuantity = /\b(?:[2-9]|\d{2,})\b/.test(text) ||
+      /\b(?:dos|tres|cuatro|varios|varias|cantidad|volumen|mayorista|mayoristas)\b/.test(text) ||
+      text.includes('en cantidad') || text.includes('mas de uno') || text.includes('más de uno') || text.includes('un par');
     const isNewAccessoryPurchase = /\b(?:comprar|compro|compra|cotizar|cotizacion|precio|presupuesto)\b/.test(text) &&
-      /\b(?:cable|conector|fuente|transformador|soporte|repuesto|adaptador|accesorio|antena|starlink|equipo|producto)\b/.test(text);
+      hasAccessoryReferenceForPurchase;
+    const hasAccessoryFailureLanguage = /\b(?:problema|problemas|falla|fallas|roto|rompio|danado|dano|no funciona|no anda)\b/.test(text);
+    const isAccessoryPurchaseRequest = (text.includes('cable') || text.includes('cables')) &&
+      (hasAccessoryPurchaseLanguage || hasAccessoryQuantity) && !hasAccessoryFailureLanguage;
+
+    if (isAccessoryPurchaseRequest && !hasExistingShipmentStatus) {
+      return {
+        primary_area: 'PRODUCTO_COMERCIAL',
+        secondary_areas: [],
+        commercialHandoff: true,
+        confidence: 0.99,
+        reason: 'El cliente solicita comprar un cable o accesorio, posiblemente en cantidad, y debe ser atendido por Gerencia Comercial.'
+      };
+    }
 
     if (isShippingIssue && !text.includes('cuanto cuesta el envio') && !text.includes('precio de envio') &&
       !(isNewAccessoryPurchase && !hasExistingShipmentStatus)) {
@@ -749,6 +784,8 @@ export default class IntentClassifier {
     const isQuestionWhatIs = text.includes('que es ') || text.includes('qué es ');
     const isModelOverviewRequest = text.includes('quiero saber del modelo') ||
       text.includes('quiero saber sobre el modelo') || text.includes('quiero saber sobre') ||
+      text.includes('quiero informacion sobre') || text.includes('quiero informacion de') ||
+      text.includes('informacion sobre') || text.includes('informacion de') ||
       text.includes('que es aitue modelo') || text.includes('qué es aitue modelo') ||
       text.includes('que es modelo') || text.includes('qué es modelo');
     const hasExplicitCommercialIntent = /\b(comprar|compra|cotizacion|cotizar|presupuesto|disponibilidad|asesoramiento|asesoria)\b/.test(text);
@@ -834,6 +871,17 @@ export default class IntentClassifier {
       }
     }
 
+    const isAccessoryInformationQuery = text.includes('que accesorios') || text.includes('accesorios existen') ||
+      text.includes('que componentes') || text.includes('componentes disponibles');
+    if (isAccessoryInformationQuery) {
+      return {
+        primary_area: 'PRODUCTO_INFO',
+        secondary_areas: [],
+        confidence: 0.96,
+        reason: 'El cliente solicita información general sobre los accesorios disponibles.'
+      };
+    }
+
     // 5. CONSULTA POR CABLES, CONECTORES, ALIMENTACIÓN, TRANSFORMADORES, FUENTES, SOPORTES, REPUESTOS O ACCESORIOS DE TIENDA
     const isAccessoriesQuery = text.includes('cable') || text.includes('cables') ||
       text.includes('conector') || text.includes('conectores') ||
@@ -852,10 +900,28 @@ export default class IntentClassifier {
     const isAccessoryPurchaseOrAdvice = text.includes('compra') || text.includes('precio') ||
       text.includes('cotizacion') || text.includes('cotizar') || text.includes('presupuesto') ||
       /\basesor\w*\b/.test(text);
+    const hasCableReference = text.includes('cable') || text.includes('cables');
+    const hasCablePurchaseSignal = /\b(tienen|quer[ií]a|quiero|busco|venden|disponible|hay)\b/.test(text) ||
+      (/\b(necesito|quisiera)\b/.test(text) && (text.includes('cable para') || text.includes('cable de')));
+    const hasQuantityPurchaseSignal = /\b(?:[2-9]|\d{2,})\b/.test(text) ||
+      /\b(?:dos|tres|cuatro|varios|varias|cantidad|volumen|mayorista|mayoristas)\b/.test(text) ||
+      text.includes('en cantidad') || text.includes('mas de uno') || text.includes('más de uno') || text.includes('un par');
+    const hasAccessoryFailureSignal = text.includes('se rompio') || text.includes('roto') ||
+      text.includes('falla') || text.includes('problema') || text.includes('no anda') ||
+      text.includes('no funciona') || text.includes('danado') || text.includes('dano');
 
-    if (isAccessoriesQuery && !isAccessoryPurchaseOrAdvice &&
-      !text.includes('se rompio') && !text.includes('roto') && !text.includes('falla') &&
-      !text.includes('danado') && !text.includes('dano')) {
+    if ((hasCableReference && (hasCablePurchaseSignal || hasQuantityPurchaseSignal) ||
+      (isAccessoriesQuery && hasQuantityPurchaseSignal)) && !hasAccessoryFailureSignal) {
+      return {
+        primary_area: 'PRODUCTO_COMERCIAL',
+        secondary_areas: [],
+        commercialHandoff: true,
+        confidence: 0.98,
+        reason: 'El cliente desea comprar un cable o accesorio, posiblemente en cantidad, y debe ser atendido por Gerencia Comercial.'
+      };
+    }
+
+    if (isAccessoriesQuery && !isAccessoryPurchaseOrAdvice && !hasAccessoryFailureSignal) {
       return {
         primary_area: 'PRODUCTO_TECNICO',
         secondary_areas: ['ACCESSORIES_ADVICE'],
@@ -885,7 +951,9 @@ export default class IntentClassifier {
 
     // 8. PAGO: Operaciones y problemas de pago o facturación
     const isPaymentIssue = text.includes('pago fue rechazado') || text.includes('pago rechazado') ||
-      text.includes('pago no acreditado') || text.includes('error de pago') || text.includes('problema con pago') || text.includes('inconveniente al pagar');
+      text.includes('pago no acreditado') || text.includes('error de pago') || text.includes('problema con pago') ||
+      text.includes('inconveniente al pagar') || text.includes('transferencia fue rechazada') ||
+      text.includes('transferencia rechazada') || text.includes('transferencia no acreditada');
 
     if (isPaymentIssue) {
       return {

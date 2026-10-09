@@ -119,15 +119,27 @@ export default class ContextManager {
     };
     const customerName = cleanIdentityValue(customerIdentity.name);
     const companyName = cleanIdentityValue(customerIdentity.company);
-    const latestCustomerMessage = [...(state.history || [])]
-      .reverse()
-      .find(message => message.role === 'user')?.text
+    const userMessages = (state.history || []).filter(message => message.role === 'user');
+    const latestCustomerMessage = userMessages.at(-1)?.text
       ?.replace(/\s+/g, ' ')
       .trim() || 'Consulta no disponible';
+    const confirmationOnly = /^(?:si|claro|dale|ok|okay|de acuerdo|por favor|me interesa|confirmo)\b[.!\s]*$/i;
+    const normalizeSummaryText = value => String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+    const substantiveCustomerMessage = [...userMessages]
+      .reverse()
+      .find(message => !confirmationOnly.test(normalizeSummaryText(message.text)))?.text
+      ?.replace(/\s+/g, ' ')
+      .trim();
+    const consultationLines = substantiveCustomerMessage && substantiveCustomerMessage !== latestCustomerMessage
+      ? [`Consulta: ${substantiveCustomerMessage}`, `Confirmación del cliente: ${latestCustomerMessage}`]
+      : [`Consulta: ${latestCustomerMessage}`];
     const summary = [
       `Cliente: ${customerName || 'No disponible'}`,
       ...(companyName ? [`Empresa: ${companyName}`] : []),
-      `Consulta: ${latestCustomerMessage}`,
+      ...consultationLines,
       `Teléfono: ${formattedPhone}`
     ].join('\n');
 

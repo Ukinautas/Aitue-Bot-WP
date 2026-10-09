@@ -444,7 +444,13 @@ async function generateOpenAIResponse(chatId, userText) {
     return BotRouter.formatCustomerHandoffResponse(routeResult);
   }
 
-  if (BotRouter.isCustomerHandoff(routeResult)) {
+  const isCommercialProductAdviceException = (routeResult.secondary_areas || []).some(areaId =>
+    areaId === 'PROTECTOR_ADVICE' || areaId === 'PROTECTOR_EXPLANATION'
+  );
+  if (BotRouter.isCustomerHandoff(routeResult) ||
+      (routeResult.commercialHandoff === true &&
+       routeResult.primary_area === 'PRODUCTO_COMERCIAL' &&
+       !isCommercialProductAdviceException)) {
     return BotRouter.formatCustomerHandoffResponse(routeResult);
   }
 
