@@ -155,13 +155,15 @@ export default class IntentClassifier {
     const hasPendingCommercialAdviceOffer =
       hasPendingCatalogOffer || hasPendingCommercialAdviceConfirmation;
     const isDecliningCommercialAdvice = /^(?:no|ahora no|mejor no|no gracias)(?:\s|$)/.test(text);
+    const isCommercialHandoffChoice = /\b(deriv|comercial|asesor|contacto)\w*\b/.test(text) ||
+      text.includes('gerencia comercial');
     const hasAffirmativeLead = /^(?:si|dale|ok(?:ay)?|claro|de una|por favor|bueno|me interesa|me sirve|confirmo|correcto)\b/.test(text);
     const isAffirmativeReply = hasAffirmativeLead && !/\bno\b/.test(text);
     const hasExplicitOperationalIntent = /\b(?:pago|pagos|transferencia|envio|pedido|paquete|seguimiento|despacho|falla|fallas|roto|danado|no funciona|no anda|internet|conectividad|conexi|activar|desactivar|cancelar|baja|sin senal|garantia)\b/.test(text);
     const requestsCommercialAdvice = /\b(asesoramiento|asesoria|asesor|gerencia comercial)\b/.test(text);
 
     if (hasPendingCommercialAdviceOffer && !isDecliningCommercialAdvice && !hasExplicitOperationalIntent &&
-      (isAffirmativeReply || requestsCommercialAdvice)) {
+      (isAffirmativeReply || requestsCommercialAdvice || isCommercialHandoffChoice)) {
       return {
         primary_area: 'PRODUCTO_COMERCIAL',
         secondary_areas: ['COMMERCIAL_HANDOFF'],
@@ -183,8 +185,6 @@ export default class IntentClassifier {
     const hasPendingProductDetailChoice = contextState.pendingProductDetailChoice === true;
     const isMoreProductInfoChoice = text.includes('mas informacion') || text.includes('mas info') ||
       text.includes('mas detalles') || text.includes('mas data');
-    const isCommercialHandoffChoice = /\b(deriv|comercial|asesor|contacto)\w*\b/.test(text) ||
-      text.includes('gerencia comercial');
     const isAffirmativeOnly = isAffirmativeReply;
 
     if (hasPendingProductDetailChoice && !hasExplicitOperationalIntent && !isMoreProductInfoChoice && isCommercialHandoffChoice) {
@@ -751,8 +751,7 @@ export default class IntentClassifier {
       text.includes('quiero saber sobre el modelo') || text.includes('quiero saber sobre') ||
       text.includes('que es aitue modelo') || text.includes('qué es aitue modelo') ||
       text.includes('que es modelo') || text.includes('qué es modelo');
-    const hasExplicitCommercialIntent = /\b(comprar|compra|precio|cotizacion|cotizar|presupuesto|disponibilidad|asesoramiento|asesoria)\b/.test(text) ||
-      text.includes('cuanto cuesta') || text.includes('cuanto vale');
+    const hasExplicitCommercialIntent = /\b(comprar|compra|cotizacion|cotizar|presupuesto|disponibilidad|asesoramiento|asesoria)\b/.test(text);
 
     if (isModelOverviewRequest && !hasExplicitCommercialIntent) {
       return {

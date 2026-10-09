@@ -29,7 +29,10 @@ export default class BotRouter {
       'DISTRIBUIDORES',
       'VISITA_COMERCIAL'
     ]);
-    return routeResult.commercialHandoff ||
+    const isProtectorAdvice = (routeResult.secondary_areas || []).some(areaId =>
+      areaId === 'PROTECTOR_ADVICE' || areaId === 'PROTECTOR_EXPLANATION'
+    );
+    return (routeResult.commercialHandoff && !isProtectorAdvice && routeResult.action !== 'SEND_PRODUCT_ADVICE') ||
       (commercialAreas.has(routeResult.primary_area) && routeResult.action !== 'SEND_PRODUCT_ADVICE') ||
       routeResult.action === 'DERIVE_TO_CUSTOMER_CARE' ||
       routeResult.action === 'SEND_COMMERCIAL_HANDOFF' ||
@@ -332,16 +335,8 @@ export default class BotRouter {
 
     // 5. EVALUACIÓN DE CONFIANZA DE CLASIFICACIÓN (Umbral >= 0.70)
     if (confidence >= 0.70) {
-      const productAdviceAreas = [
-        'PRODUCT_CATALOG', 'PROTECTOR_ADVICE', 'STANDARD_ADVICE', 'PRO_ADVICE',
-        'ULTRA_ADVICE', 'ACCESSORIES_ADVICE', 'ACCESSORIES_EXPLANATION',
-        'PROTECTOR_EXPLANATION'
-      ];
-      const suppressProductAdvice = primary_area === 'PRODUCTO_INFO' ||
-        secondary_areas.some(areaId => productAdviceAreas.includes(areaId));
-      let finalResponseText = suppressProductAdvice
-        ? this.formatCustomerHandoffResponse({ primary_area, area: primary_area })
-        : '';
+      const suppressProductAdvice = false;
+      let finalResponseText = '';
 
       if (!suppressProductAdvice) {
       if (secondary_areas.includes('STARLINK_TERMINAL_INFO') && !suppressProductAdvice) {
@@ -353,6 +348,10 @@ export default class BotRouter {
           primary_area,
           area: primary_area
         });
+      } else if (primary_area === 'PRODUCTO_INFO') {
+        finalResponseText = `AITUE ofrece soluciones Standard, Pro y Ultra+ compatibles con Starlink Mini y Mini X.
+
+Si querés asesoramiento comercial, respondé "sí" y te derivamos al Sector Comercial.`;
       } else if (secondary_areas.includes('PRODUCT_CATALOG')) {
         const modelName = classification.modelName || 'AITUE';
         const productLinks = {
@@ -506,6 +505,12 @@ Si querés asesoramiento comercial, respondé "sí" y te derivamos a Gerencia Co
         responsible: this.getAreaResponsible(primary_area),
         action: suppressProductAdvice
           ? 'SEND_COMMERCIAL_HANDOFF'
+          : classification.commercialHandoff === true && !secondary_areas.some(areaId =>
+            areaId === 'PROTECTOR_ADVICE' || areaId === 'PROTECTOR_EXPLANATION'
+          )
+          ? 'SEND_COMMERCIAL_HANDOFF'
+          : primary_area === 'PRODUCTO_INFO' && secondary_areas.length === 0
+          ? 'SEND_PRODUCT_ADVICE'
           : secondary_areas.includes('STARLINK_TERMINAL_INFO')
           ? 'SEND_STARLINK_TERMINAL_INFO'
           : secondary_areas.includes('PRODUCT_DETAIL_CLARIFICATION') ? 'SEND_PRODUCT_DETAIL_CLARIFICATION'
@@ -514,7 +519,10 @@ Si querés asesoramiento comercial, respondé "sí" y te derivamos a Gerencia Co
           : secondary_areas.some(areaId => [
             'ACCESSORIES_ADVICE', 'ACCESSORIES_EXPLANATION', 'PROTECTOR_ADVICE',
             'PROTECTOR_EXPLANATION', 'STANDARD_ADVICE', 'PRO_ADVICE', 'ULTRA_ADVICE'
-          ].includes(areaId)) ? 'SEND_PRODUCT_ADVICE' : this.getHandoffAction(primary_area),
+          ].includes(areaId)) ? 'SEND_PRODUCT_ADVICE'
+          : primary_area === 'UBICACION_GENERAL' ? 'SEND_LOCATION_INFO'
+          : primary_area === 'EMPRESA_INFO' ? 'SEND_COMPANY_INFO'
+          : this.getHandoffAction(primary_area),
         response: finalResponseText,
         isFallback: false
       };
